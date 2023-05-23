@@ -37,7 +37,11 @@ class ModBot(discord.Client):
         self.mod_channels = {}  # Map from guild to the mod channel id for that guild
         self.reports = {}  # Map from user IDs to the state of their report
 
+    ############################################## Discord Method Overloads ##############################################
     async def on_ready(self):
+        '''
+        Called when the client is done preparing the data received from Discord. Usually after login is successful and the Client.guilds and co. are filled up.
+        '''
         print(f'{self.user.name} has connected to Discord! It is these guilds:')
         for guild in self.guilds:
             print(f' - {guild.name}')
@@ -72,16 +76,36 @@ class ModBot(discord.Client):
         else:
             await self.handle_dm(message)
 
+    async def on_raw_reaction_add(self, message):
+        '''
+        Called when a message has a reaction added.
+        '''
+        # Ignore reactions from the bot
+        if message.user_id == self.user.id:
+            return
+
+        print(message)
+        # Sample: <RawReactionActionEvent message_id=1110666813022425098 user_id=1098756525004173402 channel_id=1103033289041789052 guild_id=1103033282779676743 emoji=<PartialEmoji animated=False name='👍' id=None> event_type='REACTION_ADD' member=<Member id=1098756525004173402 name='stevengo' discriminator='1519' bot=False nick=None guild=<Guild id=1103033282779676743 name='CS 152 - Sp23' shard_id=0 chunked=False member_count=235>>>
+
+    ####################################################### Handlers #####################################################
+
     async def handle_dm(self, message):
         # Handle a help message
         if message.content == Report.HELP_KEYWORD:
-            reply = "\nUse the `report` command to begin the reporting process.\n"
+            reply = "\n\nUse the `report` command to begin the reporting process.\n"
             reply += "Use the `cancel` command to cancel the report process.\n"
             await message.channel.send(reply)
             return
 
         author_id = message.author.id
         responses = []
+
+        # Testing: send an embed on any message
+        # this is not working, but fixing is low priority! - Steven
+        # embed = discord.Embed(title="Sample Embed", url="https://realdrewdata.medium.com/",
+        #                       description="This is an embed that will show how to build an embed and the different components", color=0xFF5733)
+        # print(embed)
+        # await message.channel.send(embed=embed)
 
         # Only respond to messages if they're part of a reporting flow
         if author_id not in self.reports and not message.content.startswith(Report.START_KEYWORD):
@@ -91,10 +115,16 @@ class ModBot(discord.Client):
         if author_id not in self.reports:
             self.reports[author_id] = Report(self)
 
-        # Let the report class handle this message; forward all the messages it returns to uss
-        responses = await self.reports[author_id].handle_message(message)
-        for r in responses:
-            await message.channel.send(r)
+        # Let the report class handle this message; forward all the messages it returns to us
+        messagesFromReport = await self.reports[author_id].handle_message(message)
+        # Send the bot's response message
+        responseText = ""
+        for m in messagesFromReport["messages"]:
+            responseText += m + "\n"
+        botResponse = await message.channel.send(responseText)
+        # Add any reactions to the bot response
+        for r in messagesFromReport["reactions"]:
+            await botResponse.add_reaction(r)
 
         # If the report is complete or cancelled, remove it from our map
         if self.reports[author_id].report_complete():
@@ -111,6 +141,8 @@ class ModBot(discord.Client):
 
         scores = self.eval_text(message.content)
         await mod_channel.send(self.code_format(scores))
+
+    ################################################# Helper Functions ##################################################
 
     def eval_text(self, message):
         ''''
