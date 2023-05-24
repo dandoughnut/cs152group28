@@ -63,8 +63,7 @@ class ModBot(discord.Client):
 
     async def on_message(self, message):
         '''
-        This function is called whenever a message is sent in a channel that the bot can see (including DMs).
-        Currently the bot is configured to only handle messages that are sent over DMs or in your group's "group-#" channel.
+        This function is called whenever a message is sent in a channel that the bot can see (including DMs). Currently the bot is configured to only handle messages that are sent over DMs or in your group's "group-#" channel.
         '''
         # Ignore messages from the bot
         if message.author.id == self.user.id:
@@ -102,10 +101,12 @@ class ModBot(discord.Client):
 
         # Testing: send an embed on any message
         # this is not working, but fixing is low priority! - Steven
-        # embed = discord.Embed(title="Sample Embed", url="https://realdrewdata.medium.com/",
-        #                       description="This is an embed that will show how to build an embed and the different components", color=0xFF5733)
+        # embed = discord.Embed(title="Title Goes Here",
+        #                       description="ack", color=0xe01b24)
+        # embed.set_author(name="bot bot")
+        # embed.add_field(name="field1", value="value1", inline=True)
         # print(embed)
-        # await message.channel.send(embed=embed)
+        # embedMsg = await message.channel.send(embed=embed)
 
         # Only respond to messages if they're part of a reporting flow
         if author_id not in self.reports and not message.content.startswith(Report.START_KEYWORD):
@@ -128,6 +129,13 @@ class ModBot(discord.Client):
 
         # If the report is complete or cancelled, remove it from our map
         if self.reports[author_id].report_complete():
+
+            # This code should be moved to apply to mod channel when report is completed (TODO)
+            reportedMessage = self.reports[author_id].message
+            # TODO: have these be mentions of the users
+            await message.channel.send(f'User @{reportedMessage.author.name} has reported this message: ```{message.author.name}: {message.content}``` \n See the message in context: [{message.jump_url}]')
+
+            # Remove report from map
             self.reports.pop(author_id)
 
     async def handle_channel_message(self, message):

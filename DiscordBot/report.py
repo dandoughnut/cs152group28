@@ -61,6 +61,7 @@ class Report:
 
             # Begin the reporting flow: get information about the type of abuse
             self.state = State.MESSAGE_IDENTIFIED
+            self.message = message
             return {
                 "messages": ["You are reporting this message:", "```" + message.author.name + ": " + message.content + "```", "Why are you reporting this message? \n",
                              "💩 This message contains content that is inappropriate for this context and people shouldn't see it.",
