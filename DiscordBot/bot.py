@@ -99,15 +99,6 @@ class ModBot(discord.Client):
         author_id = message.author.id
         responses = []
 
-        # Testing: send an embed on any message
-        # this is not working, but fixing is low priority! - Steven
-        # embed = discord.Embed(title="Title Goes Here",
-        #                       description="ack", color=0xe01b24)
-        # embed.set_author(name="bot bot")
-        # embed.add_field(name="field1", value="value1", inline=True)
-        # print(embed)
-        # embedMsg = await message.channel.send(embed=embed)
-
         # Only respond to messages if they're part of a reporting flow
         if author_id not in self.reports and not message.content.startswith(Report.START_KEYWORD):
             return
@@ -130,10 +121,11 @@ class ModBot(discord.Client):
         # If the report is complete or cancelled, remove it from our map
         if self.reports[author_id].report_complete():
 
-            # This code should be moved to apply to mod channel when report is completed (TODO)
+            # Send the completed report to the mod channel
+            # TODO: don't do this if the report was cancelled...
             reportedMessage = self.reports[author_id].message
-            # TODO: have these be mentions of the users
-            await message.channel.send(f'User @{reportedMessage.author.name} has reported this message: ```{message.author.name}: {message.content}``` \n See the message in context: [{message.jump_url}]')
+
+            await self.mod_channels[reportedMessage.guild.id].send(f'{message.author.mention} has reported this message from {reportedMessage.author.mention}: ```{reportedMessage.author.name}: {reportedMessage.content}``` \n See the message in context: {reportedMessage.jump_url}')
 
             # Remove report from map
             self.reports.pop(author_id)

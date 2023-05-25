@@ -8,6 +8,7 @@ class State(Enum):
     AWAITING_MESSAGE = auto()
     MESSAGE_IDENTIFIED = auto()
     REPORT_COMPLETE = auto()
+    # Add state: report resolved
 
 
 class Report:
@@ -62,8 +63,9 @@ class Report:
             # Begin the reporting flow: get information about the type of abuse
             self.state = State.MESSAGE_IDENTIFIED
             self.message = message
+
             return {
-                "messages": ["You are reporting this message:", "```" + message.author.name + ": " + message.content + "```", "Why are you reporting this message? \n",
+                "messages": [f"You are reporting this message from {message.author.mention}:", f"```{message.author.name}: {message.content}```", "Why are you reporting this message? \n",
                              "💩 This message contains content that is inappropriate for this context and people shouldn't see it.",
                              "👿 This message is harassment, bullying, or generally mean or hurtful.",
                              "💳 I think that this is a spam message or a scam, not a real person genuinely trying to interact.",
